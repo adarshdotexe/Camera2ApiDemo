@@ -90,10 +90,10 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        textureView = (TextureView)findViewById(R.id.textureview_camera);
+        textureView = findViewById(R.id.textureview_camera);
         assert textureView != null;
         textureView.setSurfaceTextureListener(textureListener);
-        Button btnCapture = (Button) findViewById(R.id.button_capture);
+        Button btnCapture = findViewById(R.id.button_capture);
         btnCapture.setOnClickListener(view -> takePicture());
         Slider isoslider = findViewById(R.id.slider_iso);
         Slider expslider = findViewById(R.id.slider_exposure);
@@ -177,7 +177,7 @@ public class CameraActivity extends AppCompatActivity {
 
             if (captureRequestBuilder != null) {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
-                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, (int) newCalculatedValue);
+                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, newCalculatedValue);
             }
             try{
                 assert captureRequestBuilder != null;
