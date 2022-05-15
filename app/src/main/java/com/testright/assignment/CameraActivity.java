@@ -95,20 +95,11 @@ public class CameraActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
         Button btnCapture = findViewById(R.id.button_capture);
         btnCapture.setOnClickListener(view -> takePicture());
-        Slider isoslider = findViewById(R.id.slider_iso);
         Slider expslider = findViewById(R.id.slider_exposure);
+        expslider.setValueFrom(-2);
+        expslider.setValueTo(2);
+        expslider.setStepSize(1);
 
-        isoslider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
-            @Override
-            public void onStartTrackingTouch(@NonNull Slider slider) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(@NonNull Slider slider) {
-                setISO(slider.getValue());
-            }
-        });
 
         expslider.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
@@ -118,7 +109,7 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(@NonNull Slider slider) {
-                setExp(slider.getValue());
+                setExp((int) slider.getValue());
             }
         });
 
@@ -126,67 +117,20 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-    private void setExp(float value) {
-        CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
-        CameraCharacteristics characteristics = null;
-        try {
-            characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-        } catch (CameraAccessException e) {
+    private void setExp(int value) {
+        long[] values = new long[]{500000000L,250000000L,125000000L,66666666L,33333333L};
+        if (captureRequestBuilder != null)
+            captureRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, values[value+2]);
+        try{
+            assert captureRequestBuilder != null;
+            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(),null,mBackgroundHandler);
+        }
+        catch (CameraAccessException e) {
             e.printStackTrace();
         }
-
-        assert characteristics != null;
-        final Range<Integer> exposureTimeRange = characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE);
-        int minExp = exposureTimeRange.getLower();
-        int maxExp = exposureTimeRange.getUpper();
-
-        if (minExp != 0 && maxExp != 0) {
-            int newCalculatedValue;
-                newCalculatedValue = (int) (((maxExp - minExp) * value) + minExp);
-
-            if (captureRequestBuilder != null) {
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, newCalculatedValue);
-            }
-            try{
-                assert captureRequestBuilder != null;
-                cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(),null,mBackgroundHandler);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
-    private void setISO(float value) {
-        CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
-        CameraCharacteristics characteristics = null;
-        try {
-            characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
 
-        assert characteristics != null;
-        final Range<Integer> isoRange = characteristics.get(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE);
-        int minISO = isoRange.getLower();
-        int maxISO = isoRange.getUpper();
-
-        if (minISO!=0 && maxISO!=0) {
-            int newCalculatedValue = (int) (((maxISO - minISO) * value) + minISO);
-
-            if (captureRequestBuilder != null) {
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
-                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, newCalculatedValue);
-            }
-            try{
-                assert captureRequestBuilder != null;
-                cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(),null,mBackgroundHandler);
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     private void takePicture() {
         if(cameraDevice == null)
@@ -289,6 +233,10 @@ public class CameraActivity extends AppCompatActivity {
             Surface surface = new Surface(texture);
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+            captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, 800);
+            captureRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, 33333333L);
+            captureRequestBuilder.set(CaptureRequest.SENSOR_FRAME_DURATION, 33333333L);
             captureRequestBuilder.addTarget(surface);
 
             cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
